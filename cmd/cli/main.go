@@ -5,10 +5,10 @@ Package cli implements a command line interface to play a word game.
 package main
 
 import (
-	"bufio"
+	// "bufio"
 	"fmt"
 	"os"
-	"strings"
+	// "strings"
 
 	"github.com/gmofishsauce/gtw/lib"
 )
@@ -50,15 +50,19 @@ func main() {
 	fmt.Println(help)
 
 	engine := gtw.New(corpus)
-
-	reader := bufio.NewReader(os.Stdin)
+	
+	// reader := bufio.NewReader(os.Stdin)
 	for { // one game per loop. Runs until ^C.
 		engine.NewGame()
+		agent := gtw.Agent(corpus)
+		
 		fmt.Println("New goal word selected")
 		for { // one guess per loop. Runs until success
 			fmt.Printf("guess> ")
-			text, _ := reader.ReadString('\n')
-			text = strings.TrimSpace(text)
+			// text, _ := reader.ReadString('\n')
+			// text = strings.TrimSpace(text)
+			text := agent.Guess()
+			fmt.Println(text)
 			if len(text) != 5 {
 				fmt.Println("5-letter words only")
 			} else {
@@ -68,6 +72,8 @@ func main() {
 					break
 				}
 				fmt.Printf("       %s (%d letters in the correct place)\n", signature, score)
+
+				agent = agent.Inform(text, signature)
 			}
 		}
 	}
