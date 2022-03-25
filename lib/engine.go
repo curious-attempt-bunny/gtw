@@ -115,11 +115,15 @@ const LETTER_INVALID = 0   // This can't ever occur in a guess or a goal
 // is easier for humans to read from the result of this method.
 
 func (e *GtwEngine) Score(guess string) (string, int) {
+	return ScoreAgainstGoal(guess, e.goal)
+}
+
+func ScoreAgainstGoal(guess string, goal string) (string, int) {
 	var aGuess, aGoal, signature [5]rune
 
 	for i, _ := range(guess) {
 		aGuess[i] = rune(guess[i])
-		aGoal[i] = rune(e.goal[i])
+		aGoal[i] = rune(goal[i])
 		signature[i] = LETTER_WRONG
 	}
 
