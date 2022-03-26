@@ -5,12 +5,11 @@ Package cli implements a command line interface to play a word game.
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"os"
+	"sort"
 	"strings"
 
-	"github.com/gmofishsauce/gtw/lib"
+	gtw "github.com/gmofishsauce/gtw/lib"
 )
 
 const defaultCorpusName = "webster-2-all-five-letter.corpus"
@@ -35,39 +34,60 @@ Success!
 `
 
 func main() {
-	if len(os.Args) != 2 {
-		fmt.Println("usage: cli corpus-path")
-		return
-	}
-	corpusPath := os.Args[1]
-	corpus, err := gtw.LoadFile(corpusPath)
-	if err != nil {
-		fmt.Printf("Cannot load corpus %s\n", corpusPath)
-		return
-	}
-	fmt.Printf("Loaded corpus: %d words\n", len(corpus))
-	fmt.Println(help)
+	corpus, _ := gtw.LoadFile("cmd/cli/wordle.corpus")
+	sort.Strings(corpus)
 
-	engine := gtw.New(corpus)
+	benchmarkAnswers := []string{
+		"epoxy",
+		// "depot",
+		// "chest",
+		// "purge",
+		// "slosh",
+		"their",
+		// "renew",
+		// "allow",
+		// "saute",
+		// "movie",
+		// "cater",
+		// "tease",
+		// "smelt",
+		// "focus",
+		// "today",
+		"watch"}
+	// "lapse",
+	// "month",
+	// "sweet",
+	// "hoard",
+	// "cloth",
+	// "brine",
+	// "ahead",
+	// "mourn",
+	// "nasty",
+	// "rupee"}
+	methods := []string{"dumb", "partition_size", "max_partition_size", "partition_size_deviation"}
+	fmt.Printf("answer, %s\n", strings.Join(methods, ", "))
+	for _, answer := range benchmarkAnswers {
+		counts := make([]string, len(methods))
+		for i, method := range methods {
+			roundCount := 0
+			agent := gtw.Agent(corpus)
+			// fmt.Printf("Remaining word count is %d\n", agent.RemainingWordCount())
+			for agent.RemainingWordCount() > 0 {
+				guess := agent.GuessUsingMethod(method)
+				signature, _ := gtw.ScoreAgainstGoal(guess, answer)
+				nextAgent := agent.Inform(guess, signature)
+				roundCount = roundCount + 1
+				fmt.Printf("Answer %s method %s. Round %d: %s reduces from %d to %d.\n", answer, method, roundCount, guess, agent.RemainingWordCount(), nextAgent.RemainingWordCount())
+				agent = nextAgent
 
-	reader := bufio.NewReader(os.Stdin)
-	for { // one game per loop. Runs until ^C.
-		engine.NewGame()
-		fmt.Println("New goal word selected")
-		for { // one guess per loop. Runs until success
-			fmt.Printf("guess> ")
-			text, _ := reader.ReadString('\n')
-			text = strings.TrimSpace(text)
-			if len(text) != 5 {
-				fmt.Println("5-letter words only")
-			} else {
-				signature, score := engine.Score(text)
-				if score == 5 {
-					fmt.Println("\nSuccess!\n")
+				if guess == answer {
 					break
 				}
-				fmt.Printf("       %s (%d letters in the correct place)\n", gtw.Humanize(signature, text), score)
 			}
+
+			// fmt.Printf("Answer %s method %s -> rounds %d\n", answer, method, roundCount)
+			counts[i] = fmt.Sprint(roundCount)
 		}
+		fmt.Printf("%s, %s\n", answer, strings.Join(counts, ", "))
 	}
 }

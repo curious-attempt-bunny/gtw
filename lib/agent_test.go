@@ -49,3 +49,19 @@ func TestInformRemovesWordsWithoutEnoughLettersInTheWrongPlace(t *testing.T) {
 		t.Errorf("Expected remaining corpus to be %v but was %v\n", expectedRemaining, nextAgent.remaining)
 	}
 }
+
+func TestInform1(t *testing.T) {
+	corpus := []string{"catty", "catch", "watch"}
+	guess := "catty"
+	answer := "watch"
+	signature, _ := ScoreAgainstGoal(guess, answer)
+	print(signature)
+
+	nextAgent := Agent(corpus).Inform(guess, signature)
+
+	// catch should be eliminated
+	expectedRemaining := []string{"watch"}
+	if !reflect.DeepEqual(nextAgent.remaining, expectedRemaining) {
+		t.Errorf("Expected remaining corpus to be %v but was %v\n", expectedRemaining, nextAgent.remaining)
+	}
+}
